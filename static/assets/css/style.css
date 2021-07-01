@@ -1,0 +1,109 @@
+
+/* LOADS FONTS */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
+
+/* MAIN STYLE / LOOKS */
+
+body{
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+}
+h1{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 30px;
+}
+h2{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 20px;
+}
+p{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+}
+form p{
+    float: left;
+    margin-top:3px;
+}
+form input{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    font-size: 18px;
+    height: 28px;
+}
+fieldset{
+    border: 0px;
+}
+
+/* STRUCTURE */
+
+.main_container{
+    width: 100%;
+    border: 0px solid #000;
+}
+.inner_container{
+    width: 80%;
+    border: 0px solid #000;
+    margin-left: 10%;
+    text-align: center;
+}
+.divider{
+    width: 100%;
+    height: 20px;
+    float: left;
+}
+.keyword_text_area_irrelevant{
+    margin-top: 10px;
+    width: 33%;
+    text-align: left;
+    float:left;
+}
+.keyword_text_area_broad{
+    margin-top: 10px;
+    width: 33%;
+    text-align: left;
+    float:left;
+}
+.keyword_text_area_exact{
+    margin-top: 10px;
+    width: 33%;
+    text-align: left;
+    float:left;
+}
+.upload_negative input[type=file]{
+    width:60%;
+}
+.keyword_search{
+    margin-bottom: 30px;
+    margin-top: 30px;
+}
+i {
+    color: #FF3E55;
+}
+svg{
+    color: #FF3E55;
+}
+.wrapper{
+    width: 80%;
+    margin:0px auto;
+}
+.export_button{
+    width: 15%;
+    position: fixed;
+    right: 100px;
+}
+table{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+}
+th{
+    text-align: center !important;
+    font-weight: bold;
+    font-size: 20px;
+    background-color: #640529;
+    color: #F9EDE1;
+}

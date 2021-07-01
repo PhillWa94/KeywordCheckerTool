@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://ai.monstergroupuk.co.uk/keywordtool/static/assets/css/style.css" />
+    <link rel="stylesheet" href="https://ai.monstergroupuk.co.uk/keywordtool/static/assets/fontawesome/fontawesome-free-5.15.3-web/css/all.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+
+    <script defer src="../static/assets/fontawesome/fontawesome-free-5.15.3-web/js/all.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script type='text/javascript'>
+    $(document).ready(function(){
+
+    $('.edit').click(function(){
+        $('.txtedit').hide();
+        $(this).next('.txtedit').show().focus();
+        $(this).hide();
+    });
+
+    //<!-- save data -->
+    $('.txtedit').focusout(function(){
+
+   // <!-- Get edit id, field name and value -->
+    var id = this.id;
+    var split_id = id.split("_");
+    var field_name = split_id[0];
+    var edit_id = split_id[1];
+    var value = $(this).val();
+
+    // Hide input element
+
+    $(this).hide();
+
+    // Hide and change text of the container with input element
+    $(this).prev('.edit').show();
+    $(this).prev('.edit').text(value);
+
+
+    $.ajax({
+        url: '/keywordtool/irrelevant',
+        type: 'post',
+        data: { field:field_name, value:value, id:id },
+        success: function(response){
+            if(response == 1){
+                console.log('Saved Successfully');
+            }else{
+                console.log("Not saved");
+             }
+    
+        }
+        });
+
+
+
+
+
+    });
+
+
+
+});
+    </script>
+</head>
+
+<body>
+    <form>
+        <input type="text", id="searchword", name="SearchWord">
+        <button type="submit" name="search" value="1" formmethod="post">Search</button></td>
+    </form>
+
+
+    <table width="300" border="1" style="float:left;">
+        <th>{{ headings }}</th>
+        <tr>
+            {% for row in data %}
+            {{ form.remove }}
+            <tr>
+
+            <td>{{ row }}</td>
+            <form method="POST" action="{{ url_for('irrelevant') }}">
+            <input id="keyword_id2" name="keyword_id" type="hidden" value="{{ row }}">
+            <td><button type="submit" name="delete" value="{{ row }}" formmethod="post"><i class="fas fa-plus-circle"></i></button></td></form>
+
+            </tr>
+            {% endfor %}
+        </tr>
+    </table>
+
+        <table width="300" border="1" style="float:left;">
+        <tr>
+        <th>{{ headings2 }}</th>
+        </tr>
+        <tr>
+            {% for row in data2 %}
+            <tr>
+
+            <td>{{ row }}</td>
+
+
+            </tr>
+            {% endfor %}
+        </tr>
+    </table >
+
+            <table width="300" border="1" style="float:left;">
+        <tr>
+        <th>{{ headings3 }}</th>
+        </tr>
+        <tr>
+            {% for row in data3 %}
+            <tr>
+
+            <td>
+            <div class="edit"> {{ row }} </div>
+                <input type="text" class="txtedit" name="edit_text" value="{{ row }}" id="{{ row }}" formmethod="post" style="display: none;" >
+            </td>
+
+
+            </tr>
+            {% endfor %}
+        </tr>
+    </table>
+    <form method="POST" action="{{ url_for('irrelevant') }}">
+
+    <td><button type="submit" name="continue" value="1" formmethod="post">Continue</button></td>
+    </form>
+
+</body>
+</html>

@@ -37,9 +37,9 @@
         $(this).prev('.edit').text(value);
 
     $.ajax({
-        url: '/keywords',
+        url: '/keywordtool/keywords',
         type: 'post',
-        data: { field:field_name, value:value, id:edit_id },
+        data: { field:field_name, value:value, id:id },
         success: function(response){
             if(response == 1){
                 console.log('Saved Successfully');
@@ -53,13 +53,6 @@
     });
 
 });
-
-
-
-
-
-
-
     </script>
 
 </head>
@@ -82,9 +75,7 @@
             <td>{{ row }}</td>
             <form method="POST" action="{{ url_for('keywords') }}">
             <input id="keyword_id2" name="keyword_id" type="hidden" value="{{ row }}">
-            <td><button type="submit" name="add" value="{{ row }}" formmethod="post"><i class="fas fa-plus-circle"></i></button></td>
-            <td><button type="submit" name="remove" value="{{ row }}" formmethod="post"><i class="fas fa-minus-circle"></i></button></td>
-            </form>
+            <td><button type="submit" name="add" value="{{ row }}" formmethod="post"><i class="fas fa-plus-circle"></i></button></td></form>
             </tr>
             {% endfor %}
         </tr>
@@ -95,15 +86,10 @@
         <th>{{ headings2 }}</th>
         </tr>
         <tr>
-            <td><input type="submit" class="button" value="Add another line" onclick="addField(this);" /></td>
             {% for row in data2 %}
             <tr>
 
-            <td>
-                <div class="edit"> {{ row }} </div>
-                <input type="text" class="txtedit" name="edit_text" value="{{ row }}" id="{{ headings2 }}_{{ row }}" formmethod="post" style="display:none;">
-                </td>
-
+            <td>{{ row }}</td>
             </tr>
             {% endfor %}
         </tr>
@@ -118,7 +104,7 @@
 
             <td>
                 <div class="edit"> {{ row }} </div>
-                <input type="text" class="txtedit" name="edit_text" value="{{ row }}" id="{{ headings3 }}_{{ row }}" formmethod="post" style="display:none;">
+                <input type="text" class="txtedit" name="edit_text" value="{{ row }}" id="{{ row }}" formmethod="post">
                 </td>
             </tr>
             {% endfor %}

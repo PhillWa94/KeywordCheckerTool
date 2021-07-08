@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="../static/assets/css/style.css" />
+</head>
+
+<body>
+
+    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        <ul>
+        </ul>
+        {{ form.file.label}}
+        {{ form.file }}
+        {{ form.file_2 }}
+        <ul>
+            {% for error in form.file.errors %}
+            <li style="color:red;">{{ error }}</li>
+            {% endfor %}
+        </ul>
+        <input type="submit" value="Submit">
+    </form>
+
+</body>
+</html>

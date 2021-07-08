@@ -79,21 +79,21 @@ def _remove_words(series_1, series_2):
                     #for each word in the array check if it exist in series_1.
                     word = split_word[i]
                     found_words = found_words.append(series_1.where(series_1.str.contains(fr"\b{word}\b")))
-                    found_words = found_words.dropna().reset_index(drop=True).drop_duplicates()
+                    found_words = found_words.dropna()
         if i == 1:
             #Phrase search
             for value in phrase_words.items():
                 pattern_word = str(value[1])
                 found_words = found_words.append(series_1.where(series_1.str.contains(fr"\b{pattern_word}\b")))
-                found_words = found_words.dropna().reset_index(drop=True).drop_duplicates()
+                found_words = found_words.dropna()
         if i == 2:
             #Exact search
             for value in exact_words.items():
                 pattern_word = str(value[1])
                 found_words = found_words.append(series_1.where(series_1.str.fullmatch(pattern_word)))
-                found_words = found_words.dropna().reset_index(drop=True).drop_duplicates()
+                found_words = found_words.dropna()
 
-    found_words.reset_index(drop=True)
+    found_words.drop_duplicates().reset_index(drop=True)
     output = series_1[~series_1.isin(found_words)].reset_index(drop=True)
 
 
@@ -131,10 +131,28 @@ def _search_phrase(series_1, search_term):
 
     out1 = pd.Series(output, name='Output')
     out2 = pd.Series(words_found, name='Containing Search word')
-    dataframe_output = pd.concat([out1,out2], axis=1)
+    #dataframe_output = pd.concat([out1,out2], axis=1)
 
 
     return out1,out2
+
+def _make_plural_singular(search_word, searched_terms):
+
+    p = inflect.engine()
+    searched_terms.append(f'"{search_word}"')
+
+    if p.singular_noun(search_word) != False:
+        # singular_noun returns false if singular noun is detected.
+
+        singular_word = p.singular_noun(search_word)
+        searched_terms.append(f'"{singular_word}"')
+    else:
+        # if it is not singular, make it plural and add to list.
+        plural_word = p.plural(search_word)
+        searched_terms.append(f'"{plural_word}"')
+
+    return searched_terms
+
 
 
 if __name__ == "__main__":
@@ -165,3 +183,4 @@ if __name__ == "__main__":
 
     dataframe_output = pd.concat([new_list,new_list2,new_list3], axis=1)
     #dataframe_output.to_excel('new_filename7.xlsx')
+

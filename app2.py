@@ -9,7 +9,7 @@ import os
 import uuid
 import inflect
 import pandas as pd
-from indataframe import _remove_words, _import_excel, _search_phrase
+from indataframe import _remove_words, _import_excel, _search_phrase, _make_plural_singular
 from werkzeug.utils import secure_filename
 
 app2 = Flask(__name__)
@@ -84,20 +84,21 @@ def keywords():
     data = session.get('remaining_data')
     data2 = session.get('allnegatives_data')
     irrelevant_column = session.get('irrelevant_words')
-    #print(f'This is your form: {request.form}')
+    print(f'This is your form: {request.form}')
 
     if request.form.get("search"):
+        #WHEN SEARCH BUTTON IS PRESSED
 
         search_word = request.form.get("SearchWord")
         session['search_term'] = search_word
+        #Function which performs the search.
         new_lists = _search_phrase(data, search_word)
 
         # This block adds the search term plus its pluralised friend to an array and ads it to the session variable search_terms.
-        p = inflect.engine()
         searched_terms = session.get('search_terms')
-        searched_terms.append(f'"{search_word}"')
-        plural_word = p.plural(search_word)
-        searched_terms.append(f'"{plural_word}"')
+        # Append a singularised or pluralised version of the searched term and update session.
+        searched_terms = _make_plural_singular(search_word, searched_terms)
+        print(searched_terms)
         session['search_terms'] = searched_terms
 
         output = pd.Series(new_lists[0], dtype=object, name="Deconstructed Words")
@@ -113,24 +114,43 @@ def keywords():
         return redirect(url_for('irrelevant', form=form, headings=headings, data=output, headings2=headings2, data2=data_found,headings3='All Negatives', data3=irrelevant_column))
 
     elif request.form.get('field'):
-        # If the data in the irrelevant column is edited
-        original_data = request.form.get('field')
-        new_data = request.form.get('value')
-        # If the pandas series for the irrelevant column has been created
-        if isinstance(irrelevant_column, pd.Series):
-            new_irrelevant_column = irrelevant_column.replace(original_data, new_data)
-            session['irrelevant_words'] = new_irrelevant_column
-        else:
-            #Create the pandas series and replace data
-            irrelevant_series = pd.Series(irrelevant_column, name="Irrelevant")
-            new_irrelevant_column = irrelevant_series.replace(original_data, new_data)
-            session['irrelevant_words'] = new_irrelevant_column
+        #WHEN ANY CELL IS EDITED
+        field = request.form.get('field')
+        if field == "Irrelevant":
+            # IF DATA IN THE IRRELEVANT FIELD IS EDITED
+            original_data = request.form.get('id')
+            new_data = request.form.get('value')
+            # If the pandas series for the irrelevant column has been created
+            if isinstance(irrelevant_column, pd.Series):
+                new_irrelevant_column = irrelevant_column.replace(original_data, new_data)
+                session['irrelevant_words'] = new_irrelevant_column
+            else:
+                #Create the pandas series and replace data
+                irrelevant_series = pd.Series(irrelevant_column, name="Irrelevant")
+                new_irrelevant_column = irrelevant_series.replace(original_data, new_data)
+                session['irrelevant_words'] = new_irrelevant_column
 
-        return render_template('keywords.html', form=form, headings=headings, data=data, headings2=headings2,
-                               data2=data2, headings3=headings3, data3=new_irrelevant_column)
+            data = session.get('remaining_data')
+            return render_template('keywords.html', form=form, headings=headings, data=data, headings2=headings2,
+                                   data2=data2, headings3=headings3, data3=new_irrelevant_column)
+        elif field == 'All Negatives':
+            original_data = request.form.get('id')
+            new_data = request.form.get('value')
+
+            if isinstance(data2, pd.Series):
+                new_allneg_column = data2.replace(original_data, new_data)
+                session['allnegatives_data'] = new_allneg_column
+            else:
+                # Create the pandas series and replace data
+                allneg_series = pd.Series(data2, name="Irrelevant")
+                new_allneg_column = allneg_series.replace(original_data, new_data)
+                session['allnegatives_data'] = new_allneg_column
+
+            return render_template('keywords.html', form=form, headings=headings, data=data, headings2=headings2,
+                                   data2=new_allneg_column, headings3=headings3, data3=irrelevant_column)
 
     elif request.form.get('add'):
-        # When button "add" is pressed
+        # WHEN THE ADD TO IRRELEVANT TABLE BUTTON IS PRESSED.
         # Get information about the word to be added.
         word_to_add = request.form.get('add')
 
@@ -148,10 +168,22 @@ def keywords():
             irrelevant_column.drop_duplicates().reset_index(drop=True)
             session['irrelevant_words'] = irrelevant_column
 
-        remaining_words = data.where(~data.str.fullmatch(word_to_add)).dropna()
+        if len(data.index) > 0:
+            remaining_words = data.where(~data.str.fullmatch(word_to_add, na=False)).dropna()
+            session['remaining_data'] = remaining_words
+
         session['remaining_data'] = remaining_words
 
         return render_template('keywords.html', form=form, headings=headings, data=remaining_words, headings2=headings2, data2=data2, headings3=headings3, data3=irrelevant_column)
+
+    elif request.form.get("remove"):
+
+        word_to_remove = request.form.get("remove")
+        remaining_words = data.where(~data.str.fullmatch(word_to_remove, na=False)).dropna()
+        session['remaining_data'] = remaining_words
+
+        return render_template('keywords.html', form=form, headings=headings, data=remaining_words, headings2=headings2,
+                               data2=data2, headings3=headings3, data3=irrelevant_column)
 
     elif request.form.get("export"):
 
@@ -171,12 +203,30 @@ def keywords():
         # Remove duplicate entries if there are any
         allnegatives.drop_duplicates()
 
+        p = inflect.engine()
 
         # Remove the index column by converting irrelevant_column to an array
         if isinstance(irrelevant_column, pd.Series):
             irr_column = []
             for index, value in irrelevant_column.iteritems():
-                irr_column.append(value)
+
+                if p.singular_noun(value) != False:
+                    #if word is plural make a singular copy and append to array.
+                    singular_value = p.singular_noun(value)
+                    if singular_value not in irr_column:
+                        irr_column.append(singular_value)
+                        irr_column.append(f'"{singular_value}"')
+                else:
+                    #if word is singular, make it plural and append
+                    plural_value = p.plural(value)
+                    if plural_value not in irr_column:
+                        irr_column.append(plural_value)
+                        irr_column.append(f'"{plural_value}"')
+
+                # also append the original word.
+                if value not in irr_column:
+                    irr_column.append(value)
+                    irr_column.append(f'"{value}"')
         else:
             irr_column = irrelevant_column
 
@@ -211,8 +261,6 @@ def keywords():
         original_data.to_excel(writer, sheet_name='Original Data')
         writer.save()
 
-
-        current_path = os.getcwd()
         #Save to uploads folder
 
 
@@ -233,7 +281,6 @@ def irrelevant():
     #This is the page which shows you deconstructed terms after you have searched a term or word.
 
     #Getting session values
-    search_word = session.get('search_term')
     allnegative = session.get('allnegatives_data')
     remaining_data = session.get('remaining_data')
     decon_words = session.get('decon_words')
@@ -241,7 +288,7 @@ def irrelevant():
     headings = 'Deconstructed Words'
     headings2 = 'Found Words'
     headings3 = 'All Negatives'
-    
+    print(f'This is your form: {request.form}')
 
     form = RemoveButton()
 
@@ -254,16 +301,16 @@ def irrelevant():
         session['search_term'] = search_word
         new_lists = _search_phrase(remaining_data, search_word)
 
-        #This block adds the searched word and its pluralised friend to an array.
-        p = inflect.engine()
+
         searched_terms = session.get('search_terms')
-        searched_terms.append(f'"{search_word}"')
-        plural_word = p.plural(search_word)
-        searched_terms.append(f'"{plural_word}"')
+        #Append a singularised or pluralised version of the searched term and update session.
+        searched_terms = _make_plural_singular(search_word, searched_terms)
+        print(searched_terms)
         session['search_terms'] = searched_terms
 
         output = pd.Series(new_lists[0], dtype=object, name="Deconstructed Words")
         output = output.drop_duplicates().dropna()
+
         headings = "Deconstructed words"
         session['decon_words'] = output
 
@@ -274,7 +321,7 @@ def irrelevant():
         return render_template('irrelevant.html', form=form, headings=headings, data=output,
                            headings2=headings2, data2=foundwords, headings3=headings3, data3=allnegative)
 
-    elif request.form.get("delete"):
+    elif request.form.get("move_to_negative"):
         # If button is pressed to move an item in "deconstructed words" to all negatives
         to_negatives = request.form.get('delete')
         series = pd.Series(to_negatives)
@@ -289,12 +336,13 @@ def irrelevant():
             session['allnegatives_data'] = allnegative2
 
         if isinstance(decon_words, pd.Series):
-
+            print("decon_words is a series")
             #Remove the word from the deconstructed list
             decon_words = decon_words.where(~decon_words.str.fullmatch(to_negatives)).dropna()
             session['decon_words'] = decon_words
 
         else:
+            print("decon_words is not a series")
             decon_series = pd.Series(decon_words)
             decon_series = decon_series.where(~decon_series.str.fullmatch(to_negatives)).dropna()
             session['decon_words'] = decon_series
@@ -304,21 +352,31 @@ def irrelevant():
                            headings2=headings2, data2=found_words ,headings3=headings3, data3=allnegative2)
 
     elif request.form.get("continue"):
+        #WHEN CONTINUE IS PRESSED THE NEGATIVE KEYWORDS FROM THE ALL NEGATIVE LIST ARE USED TO REMOVE
+        #WORDS FROM THE REMAINING KEYWORDS.
 
-        original_data_series = session.get('Original_Sentences')
-        if isinstance(original_data_series, pd.Series):
-            new_data = _remove_words(original_data_series, allnegative)
+
+        #Making sure the remaining keyword variable is a pandas Series, if it is
+        #Then run the function to remove the keywords matching the negatives
+        #If it is not a pandas Series, make it a series first.
+        remaining_data = session.get('remaining_data')
+        if isinstance(remaining_data, pd.Series):
+            new_data = _remove_words(remaining_data, allnegative)
         else:
-            original_data_ = pd.Series(original_data_series)
-            new_data = _remove_words(original_data_, allnegative)
-        
+            remaining_data_ = pd.Series(remaining_data)
+            new_data = _remove_words(remaining_data_, allnegative)
+
+        #Update the session variable containing the remaining keywords.
         session['remaining_data'] = new_data
+        #Getting session variables to display the correct values on screen.
         irrelevant_column = session.get('irrelevant_words')
         allnegative = session.get('allnegatives_data')
         
         return render_template('keywords.html', form=form, headings="Remaining Keywords", data=new_data, headings2="All Negatives", data2=allnegative, headings3 ='Irrelevant', data3=irrelevant_column)
 
     elif request.form.get('field'):
+        #IF THE CLICKABLE FIELD ON THE ALL NEGATIVE KEYWORD LIST IS ALTERED.
+
         # Editing a word in the allnegatives column
         irrelevant_column = session.get('irrelevant_words')
         allnegative = session.get('allnegatives_data')

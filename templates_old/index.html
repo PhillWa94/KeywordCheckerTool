@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="https://ai.monstergroupuk.co.uk/keywordtool/static/assets/css/style.css" />
-    <link rel="stylesheet" href="https://ai.monstergroupuk.co.uk/keywordtool/static/assets/fontawesome/fontawesome-free-5.15.3-web/css/all.css">
+    <link rel="stylesheet" href="../static/assets/css/style.css" />
+    <link rel="stylesheet" href="../static/assets/fontawesome/fontawesome-free-5.15.3-web/css/all.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
 
     <script defer src="../static/assets/fontawesome/fontawesome-free-5.15.3-web/js/all.js"></script>
@@ -34,23 +34,19 @@
     $(this).prev('.edit').show();
     $(this).prev('.edit').text(value);
 
-
     $.ajax({
-        url: '/irrelevant',
-        type: 'post',
-        data: { field:field_name, value:value, id:edit_id },
-        success: function(response){
-            if(response == 1){
-                console.log('Saved Successfully');
-            }else{
-                console.log("Not saved");
-             }
-    
-        }
-        });
+    url: '/index',
+    type: 'post',
+    data: { field:field_name, value:value, id:id },
+    success: function(response){
+        if(response == 1){
+            console.log('Saved Successfully');
+        }else{
+            console.log("Not saved");
+         }
 
-
-
+    }
+    });
 
 
     });
@@ -76,9 +72,9 @@
             <tr>
 
             <td>{{ row }}</td>
-            <form method="POST" action="{{ url_for('irrelevant') }}">
+            <form method="POST" action="{{ url_for('index') }}">
             <input id="keyword_id2" name="keyword_id" type="hidden" value="{{ row }}">
-            <td><button type="submit" name="move_to_negative" value="{{ row }}" formmethod="post"><i class="fas fa-plus-circle"></i></button></td></form>
+            <td><button type="submit" name="delete" value="{{ row }}" formmethod="post"><i class="fas fa-plus-circle"></i></button></td></form>
 
             </tr>
             {% endfor %}
@@ -111,7 +107,7 @@
 
             <td>
             <div class="edit"> {{ row }} </div>
-                <input type="text" class="txtedit" name="edit_text" value="{{ row }}" id="{{ row }}" formmethod="post" style="display: none;" >
+                <input type="text" class="txtedit" name="edit_text" value="{{ row }}" id="{{ row }}" formmethod="post" >
             </td>
 
 
@@ -119,7 +115,7 @@
             {% endfor %}
         </tr>
     </table>
-    <form method="POST" action="{{ url_for('irrelevant') }}">
+    <form method="POST" action="{{ url_for('index') }}">
 
     <td><button type="submit" name="continue" value="1" formmethod="post">Continue</button></td>
     </form>
